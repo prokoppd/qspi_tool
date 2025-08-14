@@ -30,7 +30,12 @@
 
 
 // Interrupt Enable Register Bit Masks
-#define LUT_ITEN_OFFSET         (0x10) // Offset for Interrupt Enable Register
+#define LUT_LOCK        (0x01)
+#define LUT_UNLOCK      (0x02)
+
+#define LUT_KEY_VALUE   (0x5AF05AF0) // Key value to unlock the LUT
+
+#define LUT_INTEN_OFFSET         (0x10) // Offset for Interrupt Enable Register
 #define ITEN_SEQTIMEOUTN        (1U << 11)  // Sequence execution timeout interrupt enable
 #define ITEN_AHBBUSTIMEOUTEN    (1U << 10) // AHB Bus timeout interrupt
 #define ITEN_SCKSTOPBYWREN      (1U << 9)  // SCLK stopped during command sequence because Async TX FIFO empty interrupt enable
@@ -44,9 +49,17 @@
 #define ITEN_IPCMDGEEN          (1U << 1) // IP triggered Command Sequences Grant Timeout interrupt enable
 #define ITEN_IPCMDDONEEN        (1U << 0) // IP triggered Command Sequences Execution finished interrupt enable
 
-#define LUT_LOCK        (0x01)
-#define LUT_UNLOCK      (0x02)
-#define LUT_KEY_VALUE   (0x5AF05AF0) // Key value to unlock the LUT
+
+#define LUT_INTR_OFFSET             (0x14) // Interrupt Enable Register
+#define LUT_IPCR0_OFFSET            (0xA0)
+#define LUT_IPCR1_OFFSET            (0xA4)
+#define LUT_IPTXFCR_OFFSET          (0x08) // IP TX FIFO Control Register
+#define LUT_IPCMD_OFFSET            (0xB0) // IP TX FIFO Control Register
+#define LUT_IP_TX_FIFO_CR_OFFSET    (0xBC) // TX IP FIFO Control Register
+#define LUT_IP_TX_FIFO_DR_OFFSET    (0x180) // TX IP FIFO Register Data Register
+#define LUT_IP_RX_FIFO_CR_OFFSET    (0xB8) // RX IP FIFO Control Register
+#define LUT_IP_RX_FIFO_DR_OFFSET    (0x100) // RX IP FIFO Register Data Register
+
 
 // clang-format on
 typedef struct QSPI_Context
@@ -62,10 +75,19 @@ typedef struct QSPI_Registers
     int init_done;                // Initialization done flag
     uint32_t *QSPI_CCGR47;        // Clock Gating Register
     uint32_t *QSPI_TARGET_ROOT87; // Target Root Register
-    uint32_t *QSPI_ITEN;          // Interrupt Enable Register
-    uint32_t *QSPI_MR0;           // Memory Register 0 (not used in this example)
+    uint32_t *QSPI_INTEN;          // Interrupt Enable Register
+    uint32_t *QSPI_INTR;          // Interrupt Register
+    uint32_t *QSPI_MR0;           // Memory Register 0
     uint32_t *QSPI_LUTKEY;        // LUT Key Register
     uint32_t *QSPI_LUTCR;         // LUT Control Register
+    uint32_t *QSPI_TX_IP_FIFO_CR; // TX IP FIFO Control Register
+    uint32_t *QSPI_TX_IP_FIFO_DR; // TX IP FIFO Register Data Register 
+    uint32_t *QSPI_RX_IP_FIFO_CR; // RX IP FIFO Control Register
+    uint32_t *QSPI_RX_IP_FIFO_DR;    // RX IP FIFO Register Data Register
+    uint32_t *QSPI_IPCR0;        // IP Command Register 0
+    uint32_t *QSPI_IPCR1;        // IP Command Register 1
+    uint32_t *QSPI_IPCMD;        // IP Command Register
+    uint32_t *QSPI_IPTXFCR;      // IP TX FIFO Control Register
 } QSPI_Registers;
 
 static QSPI_Context qspi_ctx = {};
@@ -76,14 +98,14 @@ static int require_memory(QSPI_Context *ctx, int fd)
     ctx->QSPI_CCGR_BASE = mmap(NULL, REG_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, CCM_CCGR_BASE);
     if (ctx->QSPI_CCGR_BASE == MAP_FAILED)
     {
-        sloge("Failed to map QSPI CCGR base: %s", strerror(errno));
+        slogt("Failed to map QSPI CCGR base: %s", strerror(errno));
         return -1;
     }
 
     ctx->QSPI_TARGET_BASE = mmap(NULL, REG_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, CCM_TARGET_ROOT_BASE);
     if (ctx->QSPI_TARGET_BASE == MAP_FAILED)
     {
-        sloge("Failed to map QSPI Target Root base: %s", strerror(errno));
+        slogt("Failed to map QSPI Target Root base: %s", strerror(errno));
         // Clean up previously mapped memory
         munmap(ctx->QSPI_CCGR_BASE, REG_SIZE);
         return -1;
@@ -92,7 +114,7 @@ static int require_memory(QSPI_Context *ctx, int fd)
     ctx->QSPI_LUT_BASE = mmap(NULL, REG_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, CCM_LUT_BASE);
     if (ctx->QSPI_LUT_BASE == MAP_FAILED)
     {
-        sloge("Failed to map QSPI LUT base: %s", strerror(errno));
+        slogt("Failed to map QSPI LUT base: %s", strerror(errno));
         // Clean up previously mapped memory
         munmap(ctx->QSPI_CCGR_BASE, REG_SIZE);
         munmap(ctx->QSPI_TARGET_BASE, REG_SIZE);
@@ -108,7 +130,16 @@ static void map_registers(QSPI_Registers *regs, QSPI_Context *ctx)
     regs->QSPI_TARGET_ROOT87 = (uint32_t *)(ctx->QSPI_TARGET_BASE + CCM_TARGET_ROOT87_OFFSET);
     regs->QSPI_LUTKEY = (uint32_t *)(ctx->QSPI_LUT_BASE + LUT_KEY18_OFFSET);
     regs->QSPI_LUTCR = (uint32_t *)(ctx->QSPI_LUT_BASE + LUT_CR_OFFSET);
-    regs->QSPI_ITEN = (uint32_t *)(ctx->QSPI_LUT_BASE + LUT_ITEN_OFFSET);
+    regs->QSPI_INTEN = (uint32_t *)(ctx->QSPI_LUT_BASE + LUT_INTEN_OFFSET);
+    regs->QSPI_INTR = (uint32_t *)(ctx->QSPI_LUT_BASE + LUT_INTR_OFFSET);
+    regs->QSPI_TX_IP_FIFO_CR = (uint32_t *)(ctx->QSPI_LUT_BASE + LUT_IP_TX_FIFO_CR_OFFSET); // TX IP FIFO Control Register
+    regs->QSPI_TX_IP_FIFO_DR = (uint32_t *)(ctx->QSPI_LUT_BASE + LUT_IP_TX_FIFO_DR_OFFSET); // TX IP FIFO Register Data Register
+    regs->QSPI_RX_IP_FIFO_CR = (uint32_t *)(ctx->QSPI_LUT_BASE + LUT_IP_RX_FIFO_CR_OFFSET); // RX IP FIFO Control Register
+    regs->QSPI_RX_IP_FIFO_DR = (uint32_t *)(ctx->QSPI_LUT_BASE + LUT_IP_RX_FIFO_DR_OFFSET); // RX IP FIFO Register Data Register
+    regs->QSPI_IPCR0 = (uint32_t *)(ctx->QSPI_LUT_BASE + LUT_IPCR0_OFFSET); // IP Command Register 0
+    regs->QSPI_IPCR1 = (uint32_t *)(ctx->QSPI_LUT_BASE + LUT_IPCR1_OFFSET); // IP Command Register 1
+    regs->QSPI_IPCMD = (uint32_t *)(ctx->QSPI_LUT_BASE + LUT_IPCMD_OFFSET); // IP Command Register
+    regs->QSPI_IPTXFCR = (uint32_t *)(ctx->QSPI_LUT_BASE + LUT_IPTXFCR_OFFSET); // IP TX FIFO Control Register
     regs->QSPI_MR0 = (uint32_t *)(ctx->QSPI_LUT_BASE + 0x00); // Memory Register 0
 
     regs->init_done = 1;
@@ -124,14 +155,14 @@ void QSPI_Init()
     int fd = open("/dev/mem", O_RDWR | O_SYNC);
     if (fd < 0)
     {
-        slogf("Failed to open /dev/mem: %s", strerror(errno));
+        slogt("Failed to open /dev/mem: %s", strerror(errno));
         return;
     }
 
     // Map the required memory regions
     if (require_memory(&qspi_ctx, fd) < 0)
     {
-        slogf("Failed to map required memory regions for QSPI");
+        slogt("Failed to map required memory regions for QSPI");
         close(fd);
         return;
     }
@@ -151,19 +182,33 @@ void QSPI_Init()
     assert(qspi_regs.QSPI_TARGET_ROOT87 != NULL && "QSPI Target Root Register mapping failed");
     assert(qspi_regs.QSPI_LUTKEY != NULL && "QSPI LUT Key Register mapping failed");
     assert(qspi_regs.QSPI_LUTCR != NULL && "QSPI LUT Control Register mapping failed");
+    assert(qspi_regs.QSPI_INTEN != NULL && "QSPI Interrupt Enable Register mapping failed");
+    assert(qspi_regs.QSPI_INTR != NULL && "QSPI Interrupt Register mapping failed");
+    assert(qspi_regs.QSPI_TX_IP_FIFO_CR != NULL && "QSPI TX IP FIFO Control Register mapping failed");
+    assert(qspi_regs.QSPI_TX_IP_FIFO_DR != NULL && "QSPI TX IP FIFO Register Data Register mapping failed");
+    assert(qspi_regs.QSPI_RX_IP_FIFO_CR != NULL && "QSPI RX IP FIFO Control Register mapping failed");
+    assert(qspi_regs.QSPI_RX_IP_FIFO_DR != NULL && "QSPI RX IP FIFO Register Data Register mapping failed");
+    assert(qspi_regs.QSPI_IPCR0 != NULL && "QSPI IP Command Register 0 mapping failed");
+    assert(qspi_regs.QSPI_IPCR1 != NULL && "QSPI IP Command Register 1 mapping failed");
+    assert(qspi_regs.QSPI_IPCMD != NULL && "QSPI IP Command Register mapping failed");
+    assert(qspi_regs.QSPI_IPTXFCR != NULL && "QSPI IP TX FIFO Control Register mapping failed");
+    assert(qspi_regs.QSPI_MR0 != NULL && "QSPI Memory Register 0 mapping failed");
 
-    // Enable QSPI clock
+    /// Step 1: Set the clock gate register CCM_CCGR47 with address 0x303842F0 to 0x30 in CM7 and to 0x3 in CA53.
     qspi_regs.QSPI_CCGR47[0] = CCM_CCGR47_A53_VALUE;
     slogt("QSPI clock enabled: %08x:%08x", (unsigned int)qspi_regs.QSPI_CCGR47, qspi_regs.QSPI_CCGR47[0]);
 
-    // Set QSPI Speed
+    /// Step 2: Set the clock root register CCM_TARGET_ROOT87 with address 0x3038AB80 to determine the flexspi clock
+    /// frequency (Page 459). The CCM_TARGET_ROOT87[MUX] determines the clock source (Page 239). Please note that bit 28
+    /// must be set to 1.
     qspi_regs.QSPI_TARGET_ROOT87[0] = CCM_TARGET_ROOT87_ENABLE | CCM_TARGET_ROOT87_CLOCK_SOURCE;
     slogt("QSPI Target Root Register set: %08x:%08x", (unsigned int)qspi_regs.QSPI_TARGET_ROOT87,
           qspi_regs.QSPI_TARGET_ROOT87[0]);
 
+    /// Step 3: Set the associated bits in interrupt enable register with address 0x30BB0010 (Page 2458).
     // Set Interupt Enable (RX, TX , empty, AHB, IP, CMD, DONE)
     // clang-format off
-    qspi_regs.QSPI_ITEN[0] =    ITEN_SEQTIMEOUTN | 
+    qspi_regs.QSPI_INTEN[0] =    ITEN_SEQTIMEOUTN | 
                                 ITEN_AHBBUSTIMEOUTEN | 
                                 ITEN_SCKSTOPBYWREN | 
                                 ITEN_SCKSTOPBYRDEN | 
@@ -176,14 +221,63 @@ void QSPI_Init()
                                 ITEN_IPCMDGEEN | 
                                 ITEN_IPCMDDONEEN;
     // clang-format on
-    slogt("QSPI Interrupt Enable Register set: %08x:%08x", (unsigned int)qspi_regs.QSPI_ITEN, qspi_regs.QSPI_ITEN[0]);
+    slogt("QSPI Interrupt Enable Register set: %08x:%08x", (unsigned int)qspi_regs.QSPI_INTEN, qspi_regs.QSPI_INTEN[0]);
 
+    /// Step 4: Enable the flexspi by setting MCR0[MDIS] to 0 (Page 2450).
     // Enable the flexspi by setting MCR0[MDIS] to 0 (Page 2450).
     qspi_regs.QSPI_MR0[0] &= ~(1 << 1); // Clear the MDIS bit to enable the module
     slogt("QSPI Memory Register 0 set: %08x:%08x", (unsigned int)qspi_regs.QSPI_MR0, qspi_regs.QSPI_MR0[0]);
 
-    // Unlock Look Up Table (LUT). LUTKEY (0x30BB0018) and LUTCR (0x30BB001C).
+    /// Step 5: Unlock Look Up Table (LUT). LUTKEY (0x30BB0018) and LUTCR (0x30BB001C).
     qspi_regs.QSPI_LUTKEY[0] = LUT_KEY_VALUE; // Write the key value to unlock
     qspi_regs.QSPI_LUTCR[0] = LUT_UNLOCK;     // Set the LUTCR to unlock
     slogt("QSPI LUT Lock state: %08x:%08x", (unsigned int)qspi_regs.QSPI_LUTCR, qspi_regs.QSPI_LUTCR[0]);
+
+    slogi("QSPI initialization completed successfully");
+}
+
+int QSPI_IsInitialized()
+{
+    return qspi_ctx.init_done && qspi_regs.init_done;
+}
+
+void QSPI_DeInit()
+{
+    if (qspi_ctx.init_done)
+    {
+        // Clean up memory mappings
+        if (qspi_ctx.QSPI_CCGR_BASE)
+            munmap(qspi_ctx.QSPI_CCGR_BASE, REG_SIZE);
+        if (qspi_ctx.QSPI_TARGET_BASE)
+            munmap(qspi_ctx.QSPI_TARGET_BASE, REG_SIZE);
+        if (qspi_ctx.QSPI_LUT_BASE)
+            munmap(qspi_ctx.QSPI_LUT_BASE, REG_SIZE);
+
+        qspi_ctx.init_done = 0;
+        slogt("QSPI resources cleaned up");
+    }
+}
+
+int QSPI_Transmit(const uint8_t *data, size_t length)
+{
+    if (!QSPI_IsInitialized())
+    {
+        slogf("QSPI is not initialized");
+        return -1;
+    }
+
+    if (data == NULL || length == 0)
+    {
+        slogf("Invalid data or length for QSPI transmission");
+        return -1;
+    }
+
+    slogt("Transmitting %zu bytes over QSPI", length);
+    
+
+
+
+    
+
+    return 0; // Return 0 on success
 }
