@@ -1,1 +1,6 @@
 qspi_tool
+build
+*.o
+*.d
+compile_commands.json
+.cache

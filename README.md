@@ -1,3 +1,24 @@
+# How to bold and run the tests 
+
+- Build the docker image:
+```bash
+docker build -t qspitool .
+```
+- Run the docker image:
+```bash
+docker run -it --rm -v $(pwd):/workspace qspitool
+```
+- Run the tests:
+```bash
+make test
+```
+- Run the tests with Valgrind:
+```bash
+make test-valgrind
+```
+
+
+
 # QSPI configuration
 
 qspi flash has a dedicated region in memory map with 256MB size.
@@ -11,7 +32,9 @@ According to IMX8MPRM.pdf it is better to use the AHB bus to communicate with FP
 
 The main registers which should be initialized are the clock gate, interrupt enable and clock controller. By default, the clock gate for flexspi is not enabled.
 1. Set the clock gate register CCM_CCGR47 with address 0x303842F0 to 0x30 in CM7 and to 0x3 in CA53.
-1. Set the clock root register CCM_TARGET_ROOT87 with address 0x3038AB80 to determine the flexspi clock frequency (Page 459). The CCM_TARGET_ROOT87[MUX] determines the clock source (Page 239). Please note that bit 28 must be set to 1.
+1. Set the clock root register CCM_TARGET_ROOT87 with address 0x3038AB80 to determine the flexspi clock frequency (Page 459). 
+    The CCM_TARGET_ROOT87[MUX] determines the clock source (Page 239).
+    Please note that bit 28 must be set to 1.
 1. Set the associated bits in interrupt enable register with address 0x30BB0010 (Page 2458).
 1. Enable the flexspi by setting MCR0[MDIS] to 0 (Page 2450).
 1.  Unlock Look Up Table (LUT). LUTKEY (0x30BB0018) and LUTCR (0x30BB001C).
@@ -46,3 +69,16 @@ This test is related to interrupt of FlexSpi in IMX8MP and it is implemented on 
 1. Enabling an interrupt. List of interrupts are in IMX8MPRM.pdf (p. 2458).
 
 It is worth noting that in ZephyrOS it is recommended to enable the interrupts in kernel side and in compilation then read or write data in application side.
+
+IMX8- Master
+FPGA - Slave
+
+Syrius FPGA comunnication classes:
+ - SyFPGAAuto - map8001
+ - SyFPGAManSlot - map8200
+
+Check Interrupts
+
+
+
+
