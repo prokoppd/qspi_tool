@@ -2,7 +2,7 @@
 #define QSPI_H
 
 
-
+#include <stdint.h>
 
 /**
  * @brief Initializes the QSPI (Quad SPI) interface.
@@ -22,6 +22,7 @@ int QSPI_IsInitialized();
 void QSPI_DeInit();
 
 
+// void QSPI_WriteBlocking(uint8_t *buffer, size_t size);
 
 #endif // QSPI_H
 

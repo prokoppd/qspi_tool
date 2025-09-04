@@ -62,6 +62,9 @@ test-valgrind: $(TEST_BIN)
 	valgrind --leak-check=full --track-origins=yes ./$(TEST_BIN)
 # Clean build files
 
+tmp/spi_check: tmp/main.c
+	$(CC) $(CFLAGS) -o $@ $< -DTESTING
+
 clean:
 	echo "Cleaning build files..."
 	rm -rf $(BUILD_DIR)

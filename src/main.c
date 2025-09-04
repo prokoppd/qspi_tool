@@ -7,7 +7,7 @@
 
 #include <unistd.h>
 
-#define lengthof(x) (sizeof(x) / sizeof((x)[0]))
+#include "internals.h"
 
 #define VERSION "0.1.3"
 
@@ -22,20 +22,20 @@ int main()
     slog_info("PAGE_SIZE: %zu", sysconf(_SC_PAGE_SIZE));
 
     QSPI_Init();
-    //
-    // if (QSPI_IsInitialized())
-    // {
-    //     slogi("QSPI initialized successfully");
-    // }
-    // else
-    // {
-    //     QSPI_DeInit();
-    //     slogf("QSPI initialization failed");
-    //     slog_destroy();
-    //     return EXIT_FAILURE;
-    // }
-    //
-    // QSPI_DeInit();
+
+    if (QSPI_IsInitialized())
+    {
+        slogi("QSPI initialized successfully");
+    }
+    else
+    {
+        QSPI_DeInit();
+        slogf("QSPI initialization failed");
+        slog_destroy();
+        return EXIT_FAILURE;
+    }
+
+    QSPI_DeInit();
     slog_destroy();
     return EXIT_SUCCESS;
 }

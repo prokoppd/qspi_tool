@@ -79,6 +79,24 @@ Syrius FPGA comunnication classes:
 
 Check Interrupts
 
+# QSPI FPGA Communication
+- Initialization
+    1.:
+    1.
 
 
+- Clock
+    1. FlexSPI clock is set to 50MHz by default.
 
+- Sampling Rate
+    1. 4 or 4.8 samples per 1/20 of grid period
+    1.   
+    
+
+- Interrupts
+    1.
+
+- IP commands
+
+- Memory Regions
+    1. 

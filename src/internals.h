@@ -7,5 +7,6 @@
 #define STATIC static
 #endif
 
+#define lengthof(x) (sizeof(x) / sizeof((x)[0]))
 
 #endif // INTERNALS_H
