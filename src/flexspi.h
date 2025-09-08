@@ -13,8 +13,101 @@
 #define ARD_SEQ_CMD     0xBB        /* cmd for read */
 #define AWR_SEQ_CMD     0xAA 	    /* cmd for write */
 
+/* Peripheral CCM base address */
+#define CCM_BASE		0x30380000
+#define CCM_CCGR47		0x42F0
+#define QSPI_CLK_ROOT	0xAB80
+#define CLK_ROOT_EN		(1 << 28)
+#define MUX_CLK_ROOT_SELECT(x)	((x) << 24)
+#define PRE_PODF(x)				((x) << 16)
+#define POST_PODF(x)			((x) << 0)
 
+#define FLEXSPI_BASE	0x30BB0000
 
+#define FSPI_MCR0		0x00
+#define FSPI_MCR0_AHB_TIMEOUT(x)	((x) << 24)
+#define FSPI_MCR0_IP_TIMEOUT(x)		((x) << 16)
+#define FSPI_MCR0_LEARN_EN		(1 << 15)
+#define FSPI_MCR0_SCRFRUN(x)	((x) << 14)
+#define FSPI_MCR0_OCTCOMB(x)	((x) << 13)
+#define FSPI_MCR0_DOZE_EN		(1 << 12)
+#define FSPI_MCR0_HSEN			(1 << 11)
+#define FSPI_MCR0_SERCLKDIV		(1 << 8)
+#define FSPI_MCR0_ATDF_EN		(1 << 7)
+#define FSPI_MCR0_ARDF_EN		(1 << 6)
+#define FSPI_MCR0_RXCLKSRC(x)	((x) << 4)
+#define FSPI_MCR0_END_CFG(x)	((x) << 2)
+#define FSPI_MCR0_MDIS			(1 << 1)
+#define FSPI_MCR0_SWRST			(1 << 0)
+
+#define FSPI_MCR1		0x04
+#define FSPI_MCR1_SEQ_TIMEOUT(x)	((x) << 16)
+#define FSPI_MCR1_AHB_TIMEOUT(x)	(x)
+
+#define FSPI_MCR2		0x08
+#define FSPI_MCR2_RESUMEWAIT(x)		((x) << 24)
+#define FSPI_MCR2_SCKBDIFFOPT(x)	((x) << 19)
+
+#define FSPI_MCR2_SAMEDEVICE(x)		((x) << 15)
+#define FSPI_MCR2_CLRLRPHS			(1 << 14)
+#define	FSPI_MCR2_CLRAHBBUFOPT(x)	((x) << 11)
+
+#define FSPI_AHBCR		0x0c
+#define FSPI_AHBCR_RDADDROPT(x)		((x) << 6)
+#define	FSPI_AHBCR_PREFETCHEN(x)	((x) << 5)
+#define FSPI_AHBCR_BUFFERABLEEN(x)	((x) << 4)
+#define FSPI_AHBCR_CACHABLEEN(x)	((x) << 3)
+#define FSPI_AHBCR_PAR_EN			(1 << 0)
+
+#define FSPI_AHBRXBUFCR0_PREFETCHEN(x)	((x) << 31)
+#define FSPI_AHBRXBUFCR0_PRIORITY(x)	((x) << 24)
+#define FSPI_AHBRXBUFCR0_MSTRID(x)		((x) << 16)
+#define FSPI_AHBRXBUFCR0_BUFSZ(x)		((x) << 0)
+
+#define FLEXSPI_STS0_ARB_IDLE_SHIFT	1
+#define FLEXSPI_STS0_ARB_IDLE_MASK	(1 << FLEXSPI_STS0_ARB_IDLE_SHIFT)
+#define FLEXSPI_STS0_SEQ_IDLE_SHIFT	0
+#define FLEXSPI_STS0_SEQ_IDLE_MASK	(1 << FLEXSPI_STS0_SEQ_IDLE_SHIFT)
+
+#define FlexSPI_MCR0_SWRESET_MASK                (0x1U)
+#define FlexSPI_MCR0_SWRESET_SHIFT               (0U)
+#define FlexSPI_MCR0_MDIS_MASK                   (0x2U)
+#define FlexSPI_MCR0_MDIS_SHIFT                  (1U)
+#define FlexSPI_MCR0_RXCLKSRC_MASK               (0x30U)
+#define FlexSPI_MCR0_RXCLKSRC_SHIFT              (4U)
+
+#define FlexSPI_FLSHCR4_WMOPT1_MASK              (0x1U)
+#define FlexSPI_FLSHCR4_WMOPT1_SHIFT             (0U)
+#define FlexSPI_FLSHCR4_WMENA_MASK               (0x4U)
+#define FlexSPI_FLSHCR4_WMENA_SHIFT              (2U)
+#define FlexSPI_FLSHCR4_WMENB_MASK               (0x8U)
+#define FlexSPI_FLSHCR4_WMENB_SHIFT              (3U)
+
+#define FlexSPI_FLSHCR4_WMOPT1(x)                (((uint32_t)(((uint32_t)(x)) << FlexSPI_FLSHCR4_WMOPT1_SHIFT)) & FlexSPI_FLSHCR4_WMOPT1_MASK)
+#define FlexSPI_FLSHCR4_WMENA(x)                 (((uint32_t)(((uint32_t)(x)) << FlexSPI_FLSHCR4_WMENA_SHIFT)) & FlexSPI_FLSHCR4_WMENA_MASK)
+#define FlexSPI_FLSHCR4_WMENB(x)                 (((uint32_t)(((uint32_t)(x)) << FlexSPI_FLSHCR4_WMENB_SHIFT)) & FlexSPI_FLSHCR4_WMENB_MASK)
+
+#define FSPI_FLSHCR1_CSINTERVAL(x)		((x) << 16)
+#define FSPI_FLSHCR1_CSINTERVALUNIT(x)	((x) << 15)
+#define FSPI_FLSHCR1_CAS(x)				((x) << 11)
+#define FSPI_FLSHCR1_WA(x)				((x) << 10)
+#define FSPI_FLSHCR1_TCSH(x)			((x) << 5)
+#define FSPI_FLSHCR1_TCSS(x)			((x) << 0)
+
+#define FSPI_FLSHCR2_ARDSEQNUM(x)		((x) << 5)
+#define FSPI_FLSHCR2_ARDSEQID(x)		((x) << 0)
+
+#define FSPI_FLSHCR2_AWRSEQNUM(x)		((x) << 13)
+#define FSPI_FLSHCR2_AWRSEQID(x)		((x) << 8)
+
+#define FSPI_FLSHCR2_AWRWAIT(x)			((x) <<	16)
+#define FSPI_FLSHCR2_AWRWAITUINT(x)		((x) <<	28)
+
+#define FSPI_LUTKEY_VALUE		0x5AF05AF0
+#define FSPI_LCKER_LOCK			0x1
+#define FSPI_LCKER_UNLOCK		0x2
+
+#define FSPI_LUT_NUM	128
 
 /* Instruction set for the LUT register */
 #define LUT_STOP			0x00

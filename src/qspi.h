@@ -21,8 +21,8 @@ int QSPI_IsInitialized();
  */
 void QSPI_DeInit();
 
+int QSPI_Busy(void);
 
-// void QSPI_WriteBlocking(uint8_t *buffer, size_t size);
 
 #endif // QSPI_H
 
