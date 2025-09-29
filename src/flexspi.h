@@ -14,6 +14,8 @@
 #define AWR_SEQ_CMD     0xAA 	    /* cmd for write */
 
 /* Peripheral CCM base address */
+#define RDC_BASE        0x303D0000
+#define RDC_PDAP91      0x056C
 #define CCM_BASE		0x30380000
 #define CCM_CCGR47		0x42F0
 #define QSPI_CLK_ROOT	0xAB80
@@ -104,8 +106,8 @@
 #define FSPI_FLSHCR2_AWRWAITUINT(x)		((x) <<	28)
 
 #define FSPI_LUTKEY_VALUE		0x5AF05AF0
-#define FSPI_LCKER_LOCK			0x1
-#define FSPI_LCKER_UNLOCK		0x2
+#define FSPI_LOCKER_LOCK			0x1
+#define FSPI_LOCKER_UNLOCK		0x2
 
 #define FSPI_LUT_NUM	128
 
@@ -118,8 +120,8 @@
 #define LUT_MODE2			0x05
 #define LUT_MODE4			0x06
 #define LUT_MODE8			0x07
-#define LUT_NXP_WRITE		0x08
-#define LUT_NXP_READ		0x09
+#define LUT_WRITE		    0x08
+#define LUT_READ		    0x09
 #define LUT_LEARN_SDR		0x0A
 #define LUT_DATSZ_SDR		0x0B
 #define LUT_DUMMY			0x0C
@@ -140,29 +142,32 @@
 #define LUT_DUMMY_RWDS_DDR	0x2D
 
 /*! @name LUT - LUT 0..LUT 127 */
-#define FlexSPI_LUT_OPERAND0_MASK	(0xFFU)
-#define FlexSPI_LUT_OPERAND0_SHIFT	(0U)
-#define FlexSPI_LUT_OPERAND0(x)		(((uint32_t)(((uint32_t)(x)) << FlexSPI_LUT_OPERAND0_SHIFT)) & FlexSPI_LUT_OPERAND0_MASK)
-#define FlexSPI_LUT_NUM_PADS0_MASK	(0x300U)
-#define FlexSPI_LUT_NUM_PADS0_SHIFT	(8U)
-#define FlexSPI_LUT_NUM_PADS0(x)	(((uint32_t)(((uint32_t)(x)) << FlexSPI_LUT_NUM_PADS0_SHIFT)) & FlexSPI_LUT_NUM_PADS0_MASK)
-#define FlexSPI_LUT_OPCODE0_MASK	(0xFC00U)
-#define FlexSPI_LUT_OPCODE0_SHIFT	(10U)
-#define FlexSPI_LUT_OPCODE0(x)		(((uint32_t)(((uint32_t)(x)) << FlexSPI_LUT_OPCODE0_SHIFT)) & FlexSPI_LUT_OPCODE0_MASK)
-#define FlexSPI_LUT_OPERAND1_MASK	(0xFF0000U)
-#define FlexSPI_LUT_OPERAND1_SHIFT	(16U)
-#define FlexSPI_LUT_OPERAND1(x)		(((uint32_t)(((uint32_t)(x)) << FlexSPI_LUT_OPERAND1_SHIFT)) & FlexSPI_LUT_OPERAND1_MASK)
-#define FlexSPI_LUT_NUM_PADS1_MASK	(0x3000000U)
-#define FlexSPI_LUT_NUM_PADS1_SHIFT	(24U)
-#define FlexSPI_LUT_NUM_PADS1(x)	(((uint32_t)(((uint32_t)(x)) << FlexSPI_LUT_NUM_PADS1_SHIFT)) & FlexSPI_LUT_NUM_PADS1_MASK)
-#define FlexSPI_LUT_OPCODE1_MASK	(0xFC000000U)
-#define FlexSPI_LUT_OPCODE1_SHIFT	(26U)
-#define FlexSPI_LUT_OPCODE1(x)		(((uint32_t)(((uint32_t)(x)) << FlexSPI_LUT_OPCODE1_SHIFT)) & FlexSPI_LUT_OPCODE1_MASK)
-
+#define FLEXSPI_LUT_OPERAND0_MASK	(0xFFU)
+#define FLEXSPI_LUT_OPERAND0_SHIFT	(0U)
+#define FLEXSPI_LUT_OPERAND0(x)		(((uint32_t)(((uint32_t)(x)) << FLEXSPI_LUT_OPERAND0_SHIFT)) & FLEXSPI_LUT_OPERAND0_MASK)
+#define FLEXSPI_LUT_NUM_PADS0_MASK	(0x300U)
+#define FLEXSPI_LUT_NUM_PADS0_SHIFT	(8U)
+#define FLEXSPI_LUT_NUM_PADS0(x)	(((uint32_t)(((uint32_t)(x)) << FLEXSPI_LUT_NUM_PADS0_SHIFT)) & FLEXSPI_LUT_NUM_PADS0_MASK)
+#define FLEXSPI_LUT_OPCODE0_MASK	(0xFC00U)
+#define FLEXSPI_LUT_OPCODE0_SHIFT	(10U)
+#define FLEXSPI_LUT_OPCODE0(x)		(((uint32_t)(((uint32_t)(x)) << FLEXSPI_LUT_OPCODE0_SHIFT)) & FLEXSPI_LUT_OPCODE0_MASK)
+#define FLEXSPI_LUT_OPERAND1_MASK	(0xFF0000U)
+#define FLEXSPI_LUT_OPERAND1_SHIFT	(16U)
+#define FLEXSPI_LUT_OPERAND1(x)		(((uint32_t)(((uint32_t)(x)) << FLEXSPI_LUT_OPERAND1_SHIFT)) & FLEXSPI_LUT_OPERAND1_MASK)
+#define FLEXSPI_LUT_NUM_PADS1_MASK	(0x3000000U)
+#define FLEXSPI_LUT_NUM_PADS1_SHIFT	(24U)
+#define FLEXSPI_LUT_NUM_PADS1(x)	(((uint32_t)(((uint32_t)(x)) << FLEXSPI_LUT_NUM_PADS1_SHIFT)) & FLEXSPI_LUT_NUM_PADS1_MASK)
+#define FLEXSPI_LUT_OPCODE1_MASK	(0xFC000000U)
+#define FLEXSPI_LUT_OPCODE1_SHIFT	(26U)
+#define FLEXSPI_LUT_OPCODE1(x)		(((uint32_t)(((uint32_t)(x)) << FLEXSPI_LUT_OPCODE1_SHIFT)) & FLEXSPI_LUT_OPCODE1_MASK)
+ 
 /* Formula to form FLEXSPI instructions in LUT table */
-#define FlexSPI_LUT_SEQ(cmd0, pad0, op0, cmd1, pad1, op1)															   \
-	(FlexSPI_LUT_OPERAND0(op0) | FlexSPI_LUT_NUM_PADS0(pad0) | FlexSPI_LUT_OPCODE0(cmd0) | FlexSPI_LUT_OPERAND1(op1) | \
-	FlexSPI_LUT_NUM_PADS1(pad1) | FlexSPI_LUT_OPCODE1(cmd1))
+
+#define FLEXSPI_LUT_SEQ(cmd0, pad0, op0, cmd1, pad1, op1)                                                              \
+    (FLEXSPI_LUT_OPERAND0(op0) | FLEXSPI_LUT_NUM_PADS0(pad0) | FLEXSPI_LUT_OPCODE0(cmd0) | FLEXSPI_LUT_OPERAND1(op1) | \
+     FLEXSPI_LUT_NUM_PADS1(pad1) | FLEXSPI_LUT_OPCODE1(cmd1))
+
+
 
 /* FlexSPI AHB buffer count */
 #define FSL_FEATURE_FlexSPI_AHB_BUFFER_COUNT	8
@@ -205,9 +210,6 @@ typedef struct {
 	uint32_t TFDR[32];							/**< IP TX FIFO Data Register 0..IP TX FIFO Data Register 31, array offset: 0x180, array step: 0x4 */
 	uint32_t LUT[128];							/**< LUT 0..LUT 127, array offset: 0x200, array step: 0x4 */
 } FlexSPI_Type;
-
-
-
 
 /*! @brief FLEXSPI sample clock source selection for Flash Reading.*/
 typedef enum _flexspi_read_sample_clock
@@ -268,7 +270,26 @@ typedef enum _flexspi_pad
 	kFlexSPI_8PAD = 0x03U, /*!< Transmit command/address and transmit/receive data only through DATA[7:0]. */
 } flexspi_pad_t;
 
+typedef enum _flexspi_command_type
+{
+    kFLEXSPI_Command, /*!< FlexSPI operation: Only command, both TX and Rx buffer are ignored. */
+    kFLEXSPI_Config,  /*!< FlexSPI operation: Configure device mode, the TX fifo size is fixed in LUT. */
+    kFLEXSPI_Read,    /* /!< FlexSPI operation: Read, only Rx Buffer is effective. */
+    kFLEXSPI_Write,   /* /!< FlexSPI operation: Read, only Tx Buffer is effective. */
+} flexspi_command_type_t;
 
+
+
+typedef struct _flexspi_transfer
+{
+    uint32_t deviceAddress;         /*!< Operation device address. */
+    flexspi_port_t port;            /*!< Operation port. */
+    flexspi_command_type_t cmdType; /*!< Execution command type. */
+    uint8_t seqIndex;               /*!< Sequence ID for command. */
+    uint8_t SeqNumber;              /*!< Sequence number for command. */
+    uint32_t *data;                 /*!< Data buffer. */
+    uint16_t dataSize;                /*!< Data size in bytes. */
+} flexspi_transfer_t;
 
 
 #endif /* FLEXSPI_H */

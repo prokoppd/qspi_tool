@@ -84,3 +84,20 @@ Filling Data to IP TX FIFO
 
 10.2.2.7.1
 Instruction execution on SPI interface
+
+
+Bus Error:
+    Chech RDC, CCM and CCGR
+
+
+Enable FlexSPI clock
+devmem2 0x303842F0 w 0x00000003 
+
+CCM
+devmem2 0x3038AB80
+
+RDC
+devmem2 0x303D056C
+
+
+

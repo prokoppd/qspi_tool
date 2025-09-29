@@ -1,6 +1,7 @@
 TARGET  := qspi_tool
 
-CFLAGS  := -Wall -Wextra -O2 -ggdb -g --pedantic -std=c2x
+CFLAGS  := -Wall -Wextra -O2 -ggdb -g --pedantic -std=c2x -D_POSIX_C_SOURCE=199309L -Wunused-function
+# CFLAGS  := -Wall -Wextra -O2 -ggdb -g --pedantic -std=c2x
 LDFLAGS := -lm
 
 SRC_DIR := src

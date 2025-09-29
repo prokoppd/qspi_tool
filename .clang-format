@@ -3,7 +3,9 @@ Language:        Cpp
 # BasedOnStyle:  LLVM
 AccessModifierOffset: -2
 AlignAfterOpenBracket: Align
+AlignArrayOfStructures: Left
 AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveMacros: Consecutive
 AlignConsecutiveDeclarations:
   Enabled: true
   AcrossEmptyLines: false
